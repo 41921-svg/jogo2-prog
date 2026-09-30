@@ -1,0 +1,143 @@
+/* ==========================================================================
+   CAMISA11 — "Seu clube. Sua história."
+   css/dashboard.css — Tela Inicial / Dashboard de Carreira
+   ========================================================================== */
+
+/* Hero da Próxima Partida */
+.dash-match-hero {
+  text-align: center;
+  padding: 26px 20px;
+  background: linear-gradient(180deg, var(--bg-card) 0%, rgba(13, 21, 37, 0.95) 100%);
+  border: 1px solid var(--border-light);
+}
+
+.dash-comp-tag {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.match-versus-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.team-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+}
+
+.team-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-top: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.team-ovr-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-top: 2px;
+}
+
+.vs-badge {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text-muted);
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.match-actions-flex {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+/* Grid Dashboard */
+.dash-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dash-stat-boxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.stat-metric-card {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-metric-card .label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.stat-metric-card .value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+/* Mini Tabela de Classificação */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mini-table th,
+.mini-table td {
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.mini-table th {
+  color: var(--text-muted);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.mini-table tr {
+  border-bottom: 1px solid rgba(30, 41, 59, 0.4);
+}
+
+.mini-table tr.highlight-user {
+  background: var(--accent-subtle);
+  font-weight: 800;
+  color: var(--accent);
+}

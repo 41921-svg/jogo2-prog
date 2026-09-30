@@ -1,0 +1,278 @@
+{
+  "competitions": [
+    {
+      "id": "brasileirao_serie_a",
+      "name": "Campeonato Brasileiro Série A",
+      "shortName": "Série A",
+      "country": "Brasil",
+      "type": "league",
+      "tier": 1,
+      "teamsCount": 20,
+      "rounds": 38,
+      "format": "double_round_robin",
+      "pointsWin": 3,
+      "pointsDraw": 1,
+      "pointsLoss": 0,
+      "promotionSpots": 0,
+      "relegationSpots": 4,
+      "continentalSpots": {
+        "libertadores": 4,
+        "preLibertadores": 2,
+        "sulamericana": 6
+      },
+      "prizePool": {
+        "champion": 48000000,
+        "runnerUp": 38000000,
+        "g4": 28000000,
+        "participant": 12000000
+      }
+    },
+    {
+      "id": "brasileirao_serie_b",
+      "name": "Campeonato Brasileiro Série B",
+      "shortName": "Série B",
+      "country": "Brasil",
+      "type": "league",
+      "tier": 2,
+      "teamsCount": 20,
+      "rounds": 38,
+      "format": "double_round_robin",
+      "pointsWin": 3,
+      "pointsDraw": 1,
+      "pointsLoss": 0,
+      "promotionSpots": 4,
+      "relegationSpots": 4,
+      "continentalSpots": {},
+      "prizePool": {
+        "champion": 18000000,
+        "runnerUp": 12000000,
+        "promoted": 8000000,
+        "participant": 4000000
+      }
+    },
+    {
+      "id": "brasileirao_serie_c",
+      "name": "Campeonato Brasileiro Série C",
+      "shortName": "Série C",
+      "country": "Brasil",
+      "type": "league",
+      "tier": 3,
+      "teamsCount": 20,
+      "rounds": 19,
+      "format": "single_round_robin",
+      "pointsWin": 3,
+      "pointsDraw": 1,
+      "pointsLoss": 0,
+      "promotionSpots": 4,
+      "relegationSpots": 4,
+      "continentalSpots": {},
+      "prizePool": {
+        "champion": 6000000,
+        "runnerUp": 4000000,
+        "promoted": 2500000,
+        "participant": 1200000
+      }
+    },
+    {
+      "id": "brasileirao_serie_d",
+      "name": "Campeonato Brasileiro Série D",
+      "shortName": "Série D",
+      "country": "Brasil",
+      "type": "league",
+      "tier": 4,
+      "teamsCount": 20,
+      "rounds": 19,
+      "format": "single_round_robin",
+      "pointsWin": 3,
+      "pointsDraw": 1,
+      "pointsLoss": 0,
+      "promotionSpots": 4,
+      "relegationSpots": 0,
+      "continentalSpots": {},
+      "prizePool": {
+        "champion": 3000000,
+        "runnerUp": 1800000,
+        "promoted": 1200000,
+        "participant": 600000
+      }
+    },
+    {
+      "id": "copa_do_brasil",
+      "name": "Copa do Brasil",
+      "shortName": "Copa do Brasil",
+      "country": "Brasil",
+      "type": "cup",
+      "tier": 1,
+      "format": "knockout",
+      "twoLegged": true,
+      "awayGoals": false,
+      "teamsCount": 32,
+      "continentalSpots": {
+        "libertadores": 1
+      },
+      "prizePool": {
+        "champion": 75000000,
+        "runnerUp": 32000000,
+        "semiFinal": 12000000
+      }
+    },
+    {
+      "id": "estadual_sp",
+      "name": "Campeonato Paulista",
+      "shortName": "Paulistão",
+      "state": "SP",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 16,
+      "rounds": 12,
+      "prizePool": {
+        "champion": 6000000,
+        "runnerUp": 2500000
+      }
+    },
+    {
+      "id": "estadual_rj",
+      "name": "Campeonato Carioca",
+      "shortName": "Cariocão",
+      "state": "RJ",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 12,
+      "rounds": 11,
+      "prizePool": {
+        "champion": 5000000,
+        "runnerUp": 2000000
+      }
+    },
+    {
+      "id": "estadual_mg",
+      "name": "Campeonato Mineiro",
+      "shortName": "Mineiro",
+      "state": "MG",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 12,
+      "rounds": 11,
+      "prizePool": {
+        "champion": 4000000,
+        "runnerUp": 1800000
+      }
+    },
+    {
+      "id": "estadual_rs",
+      "name": "Campeonato Gaúcho",
+      "shortName": "Gauchão",
+      "state": "RS",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 12,
+      "rounds": 11,
+      "prizePool": {
+        "champion": 4000000,
+        "runnerUp": 1800000
+      }
+    },
+    {
+      "id": "estadual_pr",
+      "name": "Campeonato Paranaense",
+      "shortName": "Paranaense",
+      "state": "PR",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 12,
+      "rounds": 11,
+      "prizePool": {
+        "champion": 3500000,
+        "runnerUp": 1500000
+      }
+    },
+    {
+      "id": "estadual_ba",
+      "name": "Campeonato Baiano",
+      "shortName": "Baianão",
+      "state": "BA",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 10,
+      "rounds": 9,
+      "prizePool": {
+        "champion": 3000000,
+        "runnerUp": 1200000
+      }
+    },
+    {
+      "id": "estadual_pe",
+      "name": "Campeonato Pernambucano",
+      "shortName": "Pernambucano",
+      "state": "PE",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 10,
+      "rounds": 9,
+      "prizePool": {
+        "champion": 3000000,
+        "runnerUp": 1200000
+      }
+    },
+    {
+      "id": "estadual_ce",
+      "name": "Campeonato Cearense",
+      "shortName": "Cearense",
+      "state": "CE",
+      "country": "Brasil",
+      "type": "state",
+      "tier": 1,
+      "format": "league",
+      "teamsCount": 10,
+      "rounds": 9,
+      "prizePool": {
+        "champion": 3000000,
+        "runnerUp": 1200000
+      }
+    },
+    {
+      "id": "libertadores",
+      "name": "Copa Libertadores da América",
+      "shortName": "Libertadores",
+      "country": "América do Sul",
+      "type": "continental",
+      "tier": 1,
+      "format": "groups_and_knockout",
+      "teamsCount": 32,
+      "prizePool": {
+        "champion": 115000000,
+        "runnerUp": 45000000,
+        "semiFinal": 18000000
+      }
+    },
+    {
+      "id": "sulamericana",
+      "name": "Copa Sul-Americana",
+      "shortName": "Sul-Americana",
+      "country": "América do Sul",
+      "type": "continental",
+      "tier": 2,
+      "format": "groups_and_knockout",
+      "teamsCount": 32,
+      "prizePool": {
+        "champion": 40000000,
+        "runnerUp": 18000000,
+        "semiFinal": 8000000
+      }
+    }
+  ]
+}

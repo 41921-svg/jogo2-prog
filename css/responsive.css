@@ -1,0 +1,124 @@
+/* ==========================================================================
+   CAMISA11 — "Seu clube. Sua história."
+   css/responsive.css — Responsividade Mobile-First, Tablet e Desktop
+   ========================================================================== */
+
+/* Telas Médias / Tablets (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .pitch-and-bench-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bench-panel-card {
+    max-height: 300px;
+  }
+
+  .bench-scroll-list {
+    max-height: 240px;
+  }
+
+  .dash-grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Telas Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  /* Oculta Sidebar e Ativa Barra Inferior */
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .content-container {
+    padding: 14px;
+    padding-bottom: 84px; /* Espaço para a barra inferior */
+  }
+
+  .top-header {
+    padding: 0 14px;
+    height: 60px;
+  }
+
+  .header-club-name {
+    font-size: 1rem;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .resource-chip {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  .pitch-container {
+    height: 440px;
+  }
+
+  .match-canvas-holder {
+    height: 380px;
+  }
+
+  .match-versus-flex {
+    gap: 12px;
+  }
+
+  .team-box {
+    width: 110px;
+  }
+
+  .team-name {
+    font-size: 0.92rem;
+    max-width: 110px;
+  }
+
+  .vs-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+  }
+
+  .match-actions-flex {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .match-actions-flex .btn {
+    width: 100%;
+  }
+
+  .modal-box {
+    padding: 18px;
+  }
+}
+
+/* Telas Pequenas (max-width: 480px) */
+@media (max-width: 480px) {
+  .resource-chip.ovr {
+    display: none;
+  }
+
+  .pitch-container {
+    height: 380px;
+  }
+
+  .pitch-player-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 0.82rem;
+  }
+
+  .pitch-player-name-tag {
+    font-size: 0.65rem;
+    max-width: 65px;
+  }
+
+  .match-canvas-holder {
+    height: 320px;
+  }
+}
