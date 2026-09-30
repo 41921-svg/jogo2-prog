@@ -77,14 +77,47 @@ const App = {
     this.openModal('modal-onboarding');
     this.showOnboardStep('welcome');
 
-    // Verifica se há save para habilitar o botão Continuar
+    // Renderiza o Logo Oficial CAMISA11
+    const logoHolder = document.getElementById('welcome-brand-logo');
+    if (logoHolder && typeof ClubManager !== 'undefined' && ClubManager.renderCamisa11Logo) {
+      logoHolder.innerHTML = ClubManager.renderCamisa11Logo(76);
+    }
+
+    // Verifica se há save ativo para exibir o Card de Continuar e o botão rápido
+    const hasSave = SaveSystem.hasSave();
     const continueBtn = document.getElementById('onboard-btn-continue');
-    if (continueBtn) {
-      continueBtn.style.display = SaveSystem.hasSave() ? 'block' : 'none';
+    const activeCard = document.getElementById('welcome-active-career-card');
+
+    if (hasSave) {
+      const savedData = SaveSystem.loadGame();
+      if (savedData && savedData.club) {
+        if (continueBtn) continueBtn.style.display = 'block';
+
+        if (activeCard) {
+          activeCard.style.display = 'flex';
+          const clubBadgeEl = document.getElementById('welcome-active-badge');
+          if (clubBadgeEl && typeof ClubManager !== 'undefined') {
+            clubBadgeEl.innerHTML = ClubManager.renderBadge(savedData.club, 48);
+          }
+          const clubNameEl = document.getElementById('welcome-active-club-name');
+          if (clubNameEl) clubNameEl.textContent = savedData.club.name;
+
+          const metaEl = document.getElementById('welcome-active-meta');
+          if (metaEl) {
+            const yr = savedData.season ? savedData.season.year : 2026;
+            const rd = savedData.season ? savedData.season.currentRound : 1;
+            const ovr = savedData.club.ovr || 70;
+            metaEl.textContent = `Temporada ${yr} · Rodada ${rd} · ⭐ ${ovr} OVR`;
+          }
+        }
+      }
+    } else {
+      if (continueBtn) continueBtn.style.display = 'none';
+      if (activeCard) activeCard.style.display = 'none';
     }
   },
 
-  // Alterna as etapas do Onboarding (welcome, choose_club, create_club, difficulty, start)
+  // Alterna as etapas do Onboarding (welcome, choose, create, difficulty, start, settings)
   showOnboardStep(stepId) {
     const steps = ['welcome', 'choose', 'create', 'difficulty', 'start', 'settings'];
     steps.forEach(s => {
@@ -101,7 +134,164 @@ const App = {
       this.renderChooseClubsList();
     } else if (stepId === 'create') {
       this.initCreateClubDefaults();
+    } else if (stepId === 'settings') {
+      this.refreshSettingsUI();
     }
+  },
+
+  // Solicita confirmação para iniciar nova carreira caso já exista save
+  promptNewCareer() {
+    if (SaveSystem.hasSave()) {
+      const confirmNew = confirm('Você já possui uma carreira salva. Deseja iniciar uma nova história? (Seu save anterior será substituído ao iniciar a nova temporada)');
+      if (!confirmNew) return;
+    }
+    this.showOnboardStep('choose');
+  },
+
+  // Abre a tela de configurações (Regras 3 e 92)
+  openSettings() {
+    this.openModal('modal-onboarding');
+    this.showOnboardStep('settings');
+  },
+
+  // Retorna para o menu principal com auto-save prévio
+  returnToMainMenu() {
+    if (GameEngine.hasActiveCareer()) {
+      GameEngine.save();
+    }
+    this.openInitialScreen();
+    this.showToast('Menu principal carregado.', 'info');
+  },
+
+  // Fecha a tela de configurações e retorna ao menu de boas-vindas ou ao jogo
+  closeSettings() {
+    if (GameEngine.hasActiveCareer()) {
+      this.closeModal('modal-onboarding');
+    } else {
+      this.showOnboardStep('welcome');
+    }
+  },
+
+  // Atualiza os controles visuais de configurações com base no estado real
+  refreshSettingsUI() {
+    const s = SaveSystem.loadSettings();
+
+    // Toggle Áudio
+    const audioBtn = document.getElementById('settings-audio-toggle');
+    if (audioBtn) {
+      const isEnabled = typeof SoundEngine !== 'undefined' ? SoundEngine.enabled : (s.soundEnabled !== false);
+      audioBtn.classList.toggle('active', isEnabled);
+      audioBtn.textContent = isEnabled ? 'LIGADO' : 'DESLIGADO';
+    }
+
+    // Volume Slider
+    const volSlider = document.getElementById('settings-volume-slider');
+    const volLabel = document.getElementById('settings-volume-label');
+    if (volSlider && volLabel) {
+      const vol = typeof SoundEngine !== 'undefined' ? Math.round(SoundEngine.volume * 100) : 70;
+      volSlider.value = vol;
+      volLabel.textContent = `${vol}%`;
+    }
+
+    // Status do Save
+    const saveStatus = document.getElementById('settings-save-status');
+    if (saveStatus) {
+      if (SaveSystem.hasSave()) {
+        const saved = SaveSystem.loadGame();
+        const dateStr = saved.savedAt ? new Date(saved.savedAt).toLocaleString('pt-BR') : 'Data desconhecida';
+        saveStatus.textContent = `Carreira: ${saved.club.name} · Salvo em: ${dateStr}`;
+      } else {
+        saveStatus.textContent = 'Nenhuma carreira salva no navegador.';
+      }
+    }
+  },
+
+  // Alterna som nas configurações
+  toggleSoundSettings() {
+    if (typeof SoundEngine !== 'undefined') {
+      const state = SoundEngine.toggle();
+      if (state && SoundEngine.playWhistle) {
+        SoundEngine.playWhistle();
+      }
+    }
+    this.refreshSettingsUI();
+  },
+
+  // Altera volume nas configurações
+  onVolumeChange(val) {
+    if (typeof SoundEngine !== 'undefined') {
+      SoundEngine.setVolume(val / 100);
+    }
+    const volLabel = document.getElementById('settings-volume-label');
+    if (volLabel) volLabel.textContent = `${val}%`;
+  },
+
+  // Altera velocidade padrão da simulação
+  onSimSpeedChange(val) {
+    const s = SaveSystem.loadSettings();
+    s.simSpeed = Number(val);
+    SaveSystem.saveSettings(s);
+    this.showToast(`Velocidade de simulação ajustada para ${val}x`, 'info');
+  },
+
+  // Exporta save para download e cópia para área de transferência
+  exportSaveFile() {
+    const json = SaveSystem.exportSave();
+    if (!json) {
+      this.showToast('Nenhum save existente para exportar.', 'error');
+      return;
+    }
+
+    // Copia para área de transferência se suportado
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).catch(() => {});
+    }
+
+    // Aciona download do arquivo JSON
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `camisa11_save_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    this.showToast('Save baixado e copiado para a área de transferência!', 'gold');
+  },
+
+  // Importa save a partir de texto colado
+  promptImportSave() {
+    const pasted = prompt('Cole aqui o texto JSON do seu save exportado:');
+    if (!pasted || !pasted.trim()) return;
+
+    const ok = SaveSystem.importSave(pasted.trim());
+    if (ok) {
+      this.showToast('Save importado com sucesso! Carregando...', 'gold');
+      setTimeout(() => {
+        location.reload();
+      }, 800);
+    } else {
+      this.showToast('Falha ao importar save. Verifique a formatação do arquivo.', 'error');
+    }
+  },
+
+  // Apaga a carreira salva com confirmação de segurança
+  deleteSaveData() {
+    if (!SaveSystem.hasSave()) {
+      this.showToast('Não há carreira salva para apagar.', 'info');
+      return;
+    }
+
+    const conf = confirm('ATENÇÃO: Você realmente deseja apagar a carreira salva? Todos os títulos, dados e histórico serão permanentemente excluídos.');
+    if (!conf) return;
+
+    SaveSystem.deleteSave();
+    if (GameEngine.state) GameEngine.state = null;
+    this.refreshSettingsUI();
+    this.showOnboardStep('welcome');
+    this.showToast('Carreira apagada com sucesso.', 'info');
   },
 
   // Alterna entre as 8 Abas Principais (Regra 60)
@@ -387,13 +577,20 @@ const App = {
   },
 
   chooseDivisionFilter: 'ALL',
+  chooseStateFilter: 'ALL',
   chooseSearchQuery: '',
 
-  // Filtra clubes por divisão na tela inicial
+  // Filtra clubes por divisão na tela de seleção (Regra 4)
   filterChooseClubs(divisionId) {
     this.chooseDivisionFilter = divisionId;
     const pills = document.querySelectorAll('#choose-division-pills button');
     pills.forEach(p => p.classList.toggle('active', p.dataset.div === divisionId));
+    this.renderChooseClubsList();
+  },
+
+  // Filtra clubes por estado
+  onClubStateFilter(stateUf) {
+    this.chooseStateFilter = stateUf;
     this.renderChooseClubsList();
   },
 
@@ -403,20 +600,23 @@ const App = {
     this.renderChooseClubsList();
   },
 
-  // Renderiza lista de clubes disponíveis para seleção com filtros
+  // Renderiza lista de clubes disponíveis para seleção com filtros (Regra 4)
   renderChooseClubsList() {
     const grid = document.getElementById('choose-clubs-grid');
     if (!grid) return;
 
     const clubs = DataProvider.searchClubs({
       division: this.chooseDivisionFilter,
+      state: this.chooseStateFilter,
       query: this.chooseSearchQuery
     });
 
     if (clubs.length === 0) {
       grid.innerHTML = `
-        <div style="text-align: center; padding: 30px 10px; color: var(--text-muted); grid-column: 1 / -1;">
-          <p>Nenhum clube encontrado para o filtro aplicado.</p>
+        <div style="text-align: center; padding: 36px 12px; color: var(--text-muted); grid-column: 1 / -1;">
+          <div style="font-size: 2.2rem; margin-bottom: 8px;">🔍</div>
+          <p style="font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Nenhum clube encontrado</p>
+          <p style="font-size: 0.8rem;">Tente ajustar os filtros de divisão, estado ou limpar a pesquisa.</p>
         </div>
       `;
       return;
@@ -424,12 +624,16 @@ const App = {
 
     grid.innerHTML = clubs.map(c => {
       const comp = DataProvider.getCompetition(c.division);
-      const divName = comp ? comp.shortName : 'Nacional';
+      const divName = comp ? comp.shortName : (c.division || 'Nacional');
+      const sigla = c.sigla || c.shortName || '';
       return `
         <div class="choose-club-card" onclick="App.selectExistingClub('${c.id}')">
-          <div class="choose-club-badge">${typeof ClubManager !== 'undefined' ? ClubManager.renderBadge(c, 44) : '⚽'}</div>
+          <div class="choose-club-badge">${typeof ClubManager !== 'undefined' ? ClubManager.renderBadge(c, 48) : '⚽'}</div>
           <div class="choose-club-info">
-            <h4>${c.name}</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap: 6px;">
+              <h4 style="margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.name}</h4>
+              <span style="font-size:0.75rem; font-weight:900; color:var(--accent); background:var(--accent-subtle); padding:2px 6px; border-radius:var(--radius-sm);">${sigla}</span>
+            </div>
             <p>${c.city} - ${c.state} · 🏟️ ${c.stadium || 'Estádio'}</p>
             <div class="choose-club-specs">
               <span class="div-tag">${divName}</span>
@@ -449,58 +653,293 @@ const App = {
     this.showOnboardStep('difficulty');
   },
 
-  // Prepara valores padrão para criar um clube próprio
+  // Prepara valores padrão para criar um clube próprio (Regra 5)
   initCreateClubDefaults() {
     this.draftClub = {
-      name: 'CAMISA11 FC',
-      shortName: 'C11',
+      name: 'Camisa11 Futebol Clube',
+      shortName: 'Camisa11',
+      sigla: 'C11',
       city: 'São Paulo',
       state: 'SP',
+      country: 'Brasil',
       primaryColor: '#0f172a',
       secondaryColor: '#10b981',
+      tertiaryColor: '#f8fafc',
       badgeShape: 'shield',
+      badgePattern: 'solid',
       badgeSymbol: 'ball',
-      division: 'brasileirao_serie_d'
+      division: 'brasileirao_serie_d',
+      ovr: 64,
+      budget: 2500000,
+      reputation: 45,
+      capacity: 10000
     };
+
+    const nameInput = document.getElementById('create-club-name');
+    if (nameInput) nameInput.value = this.draftClub.name;
+    const shortInput = document.getElementById('create-club-shortname');
+    if (shortInput) shortInput.value = this.draftClub.shortName;
+    const siglaInput = document.getElementById('create-club-sigla');
+    if (siglaInput) siglaInput.value = this.draftClub.sigla;
+    const cityInput = document.getElementById('create-club-city');
+    if (cityInput) cityInput.value = this.draftClub.city;
+    const stateInput = document.getElementById('create-club-state');
+    if (stateInput) stateInput.value = this.draftClub.state;
+
+    const col1 = document.getElementById('create-color-primary');
+    if (col1) col1.value = this.draftClub.primaryColor;
+    const col2 = document.getElementById('create-color-secondary');
+    if (col2) col2.value = this.draftClub.secondaryColor;
+    const col3 = document.getElementById('create-color-tertiary');
+    if (col3) col3.value = this.draftClub.tertiaryColor;
+
+    this.renderShapeOptions();
+    this.renderPatternOptions();
+    this.renderSymbolOptions();
     this.updateCreateClubPreview();
   },
 
-  // Atualiza pré-visualização do escudo criado
-  updateCreateClubPreview() {
-    const nameInput = document.getElementById('create-club-name');
-    const shortInput = document.getElementById('create-club-short');
-    const cityInput = document.getElementById('create-club-city');
+  // Renderiza opções interativas de modelo do escudo/emblema
+  renderShapeOptions() {
+    const grid = document.getElementById('create-shapes-grid');
+    if (!grid || typeof ClubManager === 'undefined') return;
 
-    if (nameInput) this.draftClub.name = nameInput.value || 'CAMISA11 FC';
-    if (shortInput) this.draftClub.shortName = shortInput.value || 'C11';
-    if (cityInput) this.draftClub.city = cityInput.value || 'São Paulo';
+    const shapes = ClubManager.getShapeOptions();
+    grid.innerHTML = shapes.map(s => {
+      const isActive = this.draftClub && this.draftClub.badgeShape === s.id;
+      const previewClub = {
+        primaryColor: this.draftClub.primaryColor,
+        secondaryColor: this.draftClub.secondaryColor,
+        tertiaryColor: this.draftClub.tertiaryColor,
+        badgeShape: s.id,
+        badgePattern: this.draftClub.badgePattern,
+        badgeSymbol: this.draftClub.badgeSymbol,
+        sigla: this.draftClub.sigla
+      };
+      return `
+        <div class="badge-option-btn ${isActive ? 'active' : ''}" onclick="App.setCreateBadgeShape('${s.id}')" title="${s.name}">
+          ${ClubManager.renderBadge(previewClub, 38)}
+          <span>${s.name}</span>
+        </div>
+      `;
+    }).join('');
+  },
 
-    const preview = document.getElementById('create-badge-preview');
-    if (preview && typeof ClubManager !== 'undefined') {
-      preview.innerHTML = ClubManager.renderBadge(this.draftClub, 90);
-    }
+  // Renderiza opções interativas de padrão do emblema (Patterns)
+  renderPatternOptions() {
+    const grid = document.getElementById('create-patterns-grid');
+    if (!grid || typeof ClubManager === 'undefined') return;
+
+    const patterns = ClubManager.getPatternOptions();
+    grid.innerHTML = patterns.map(p => {
+      const isActive = this.draftClub && this.draftClub.badgePattern === p.id;
+      const previewClub = {
+        primaryColor: this.draftClub.primaryColor,
+        secondaryColor: this.draftClub.secondaryColor,
+        tertiaryColor: this.draftClub.tertiaryColor,
+        badgeShape: this.draftClub.badgeShape,
+        badgePattern: p.id,
+        badgeSymbol: this.draftClub.badgeSymbol,
+        sigla: this.draftClub.sigla
+      };
+      return `
+        <div class="badge-option-btn ${isActive ? 'active' : ''}" onclick="App.setCreateBadgePattern('${p.id}')" title="${p.name}">
+          ${ClubManager.renderBadge(previewClub, 38)}
+          <span>${p.name}</span>
+        </div>
+      `;
+    }).join('');
+  },
+
+  // Renderiza opções interativas de símbolo do escudo/emblema
+  renderSymbolOptions() {
+    const grid = document.getElementById('create-symbols-grid');
+    if (!grid || typeof ClubManager === 'undefined') return;
+
+    const symbols = ClubManager.getSymbolOptions();
+    grid.innerHTML = symbols.map(sym => {
+      const isActive = this.draftClub && this.draftClub.badgeSymbol === sym.id;
+      const previewClub = {
+        primaryColor: this.draftClub.primaryColor,
+        secondaryColor: this.draftClub.secondaryColor,
+        tertiaryColor: this.draftClub.tertiaryColor,
+        badgeShape: this.draftClub.badgeShape,
+        badgePattern: this.draftClub.badgePattern,
+        badgeSymbol: sym.id,
+        sigla: this.draftClub.sigla
+      };
+      return `
+        <div class="badge-option-btn ${isActive ? 'active' : ''}" onclick="App.setCreateBadgeSymbol('${sym.id}')" title="${sym.name}">
+          ${ClubManager.renderBadge(previewClub, 38)}
+          <span>${sym.name}</span>
+        </div>
+      `;
+    }).join('');
   },
 
   setCreateBadgeShape(shape) {
     if (!this.draftClub) this.initCreateClubDefaults();
     this.draftClub.badgeShape = shape;
+    this.renderShapeOptions();
+    this.renderPatternOptions();
+    this.renderSymbolOptions();
+    this.updateCreateClubPreview();
+  },
+
+  setCreateBadgePattern(pattern) {
+    if (!this.draftClub) this.initCreateClubDefaults();
+    this.draftClub.badgePattern = pattern;
+    this.renderPatternOptions();
+    this.renderShapeOptions();
+    this.renderSymbolOptions();
     this.updateCreateClubPreview();
   },
 
   setCreateBadgeSymbol(symbol) {
     if (!this.draftClub) this.initCreateClubDefaults();
     this.draftClub.badgeSymbol = symbol;
+    this.renderSymbolOptions();
     this.updateCreateClubPreview();
   },
 
   setCreateColor(type, color) {
     if (!this.draftClub) this.initCreateClubDefaults();
-    if (type === 'primary') this.draftClub.primaryColor = color;
-    if (type === 'secondary') this.draftClub.secondaryColor = color;
+    if (type === 'primary') {
+      this.draftClub.primaryColor = color;
+      const el = document.getElementById('create-color-primary');
+      if (el) el.value = color;
+    } else if (type === 'secondary') {
+      this.draftClub.secondaryColor = color;
+      const el = document.getElementById('create-color-secondary');
+      if (el) el.value = color;
+    } else if (type === 'tertiary') {
+      this.draftClub.tertiaryColor = color;
+      const el = document.getElementById('create-color-tertiary');
+      if (el) el.value = color;
+    }
+
+    this.renderShapeOptions();
+    this.renderPatternOptions();
+    this.renderSymbolOptions();
     this.updateCreateClubPreview();
   },
 
+  setCreateDivision(division) {
+    if (!this.draftClub) this.initCreateClubDefaults();
+    this.draftClub.division = division;
+
+    let defOvr = 64;
+    let defRep = 45;
+    let defBudget = 2500000;
+    let defCap = 10000;
+
+    if (division === 'brasileirao_serie_a') {
+      defOvr = 76;
+      defRep = 75;
+      defBudget = 12000000;
+      defCap = 32000;
+    } else if (division === 'brasileirao_serie_b') {
+      defOvr = 72;
+      defRep = 65;
+      defBudget = 6500000;
+      defCap = 20000;
+    } else if (division === 'brasileirao_serie_c') {
+      defOvr = 68;
+      defRep = 55;
+      defBudget = 4000000;
+      defCap = 14000;
+    }
+
+    this.draftClub.ovr = defOvr;
+    this.draftClub.budget = defBudget;
+    this.draftClub.reputation = defRep;
+    this.draftClub.capacity = defCap;
+
+    const cards = document.querySelectorAll('#create-divisions-grid .starting-div-card');
+    cards.forEach(c => {
+      c.classList.toggle('active', c.dataset.div === division);
+    });
+
+    this.updateCreateClubPreview();
+  },
+
+  updateCreateClubPreview() {
+    if (!this.draftClub) return;
+
+    const nameInput = document.getElementById('create-club-name');
+    const shortInput = document.getElementById('create-club-shortname');
+    const siglaInput = document.getElementById('create-club-sigla');
+    const cityInput = document.getElementById('create-club-city');
+    const stateInput = document.getElementById('create-club-state');
+
+    if (nameInput && nameInput.value.trim()) this.draftClub.name = nameInput.value.trim();
+    if (shortInput && shortInput.value.trim()) this.draftClub.shortName = shortInput.value.trim();
+    if (siglaInput && siglaInput.value.trim()) this.draftClub.sigla = siglaInput.value.trim().toUpperCase().slice(0, 4);
+    if (cityInput && cityInput.value.trim()) this.draftClub.city = cityInput.value.trim();
+    if (stateInput) this.draftClub.state = stateInput.value;
+
+    const preview = document.getElementById('create-badge-preview');
+    if (preview && typeof ClubManager !== 'undefined') {
+      preview.innerHTML = ClubManager.renderBadge(this.draftClub, 88);
+    }
+
+    const prevName = document.getElementById('create-preview-name');
+    if (prevName) prevName.textContent = this.draftClub.name;
+
+    const prevMeta = document.getElementById('create-preview-meta');
+    if (prevMeta) prevMeta.textContent = `${this.draftClub.city} - ${this.draftClub.state} · ${this.draftClub.country}`;
+
+    const divComp = DataProvider.getCompetition(this.draftClub.division);
+    const divShort = divComp ? divComp.shortName : 'Série D';
+
+    const prevDiv = document.getElementById('create-preview-div');
+    if (prevDiv) prevDiv.textContent = divShort;
+
+    const prevOvr = document.getElementById('create-preview-ovr');
+    if (prevOvr) prevOvr.textContent = `⭐ ${this.draftClub.ovr} OVR`;
+
+    const prevBud = document.getElementById('create-preview-budget');
+    if (prevBud) prevBud.textContent = `💰 ${this.formatCurrency(this.draftClub.budget)}`;
+
+    const prevStad = document.getElementById('create-preview-stadium');
+    if (prevStad) prevStad.textContent = `🏟️ Arena ${this.draftClub.shortName}`;
+
+    const autoStad = document.getElementById('auto-gen-stadium');
+    if (autoStad) {
+      const cap = this.draftClub.capacity || 10000;
+      autoStad.textContent = `Arena ${this.draftClub.shortName} (${cap.toLocaleString('pt-BR')} lug.)`;
+    }
+
+    const autoCal = document.getElementById('auto-gen-calendar');
+    if (autoCal) {
+      autoCal.textContent = `38 rodadas na ${divShort} + Estadual ${this.draftClub.state}`;
+    }
+  },
+
   submitCreatedClub() {
+    const nameInput = document.getElementById('create-club-name');
+    const shortInput = document.getElementById('create-club-shortname');
+    const siglaInput = document.getElementById('create-club-sigla');
+    const cityInput = document.getElementById('create-club-city');
+
+    if (!nameInput || !nameInput.value.trim()) {
+      this.showToast('Por favor, digite o nome do seu clube.', 'error');
+      return;
+    }
+    if (!shortInput || !shortInput.value.trim()) {
+      this.showToast('Por favor, informe o nome curto do clube.', 'error');
+      return;
+    }
+    if (!siglaInput || !siglaInput.value.trim()) {
+      this.showToast('Por favor, informe a sigla (3 ou 4 letras).', 'error');
+      return;
+    }
+    if (!cityInput || !cityInput.value.trim()) {
+      this.showToast('Por favor, informe a cidade sede do clube.', 'error');
+      return;
+    }
+
+    this.updateCreateClubPreview();
     this.selectedExistingClub = null;
     this.showOnboardStep('difficulty');
   },

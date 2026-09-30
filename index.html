@@ -59,8 +59,12 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="btn btn-secondary btn-sm btn-block" id="btn-sound-toggle" onclick="if(typeof SoundEngine!=='undefined') SoundEngine.toggle();" title="Alternar Efeitos Sonoros">🔊 Som</button>
-        <button class="btn btn-danger-subtle btn-sm btn-block" id="btn-reset-career">Recomeçar Carreira</button>
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+          <button class="btn btn-secondary btn-xs btn-block" id="btn-sound-toggle" onclick="if(typeof SoundEngine!=='undefined') SoundEngine.toggle();" title="Alternar Efeitos Sonoros">🔊 Som</button>
+          <button class="btn btn-secondary btn-xs btn-block" onclick="App.openSettings()" title="Configurações e Áudio">⚙️ Ajustes</button>
+        </div>
+        <button class="btn btn-secondary btn-xs btn-block" style="margin-bottom: 6px;" onclick="App.returnToMainMenu()" title="Retornar ao Menu Principal">🏠 Menu Principal</button>
+        <button class="btn btn-danger-subtle btn-xs btn-block" id="btn-reset-career">Recomeçar Carreira</button>
       </div>
     </aside>
 
@@ -114,6 +118,8 @@
           <div class="resource-chip ovr" title="Força Geral do Elenco">
             <span id="top-ovr">⭐ 72 OVR</span>
           </div>
+
+          <button class="header-settings-btn" onclick="App.openSettings()" title="Configurações do Jogo">⚙️</button>
         </div>
       </header>
 
@@ -466,18 +472,33 @@
   <div class="modal-overlay hidden" id="modal-onboarding">
     <div class="modal-box">
 
-      <!-- PASSO 1: BOAS-VINDAS -->
+      <!-- PASSO 1: BOAS-VINDAS / TELA INICIAL (REGRA 3) -->
       <div id="onboard-step-welcome" class="onboard-step">
-        <div style="text-align: center; padding: 20px 0;">
-          <div style="font-size: 3.5rem; margin-bottom: 8px;">⚽</div>
-          <h1 style="font-size: 2.2rem; font-weight: 900; letter-spacing: -0.03em; color: var(--text-main); margin-bottom: 4px;">
-            CAMISA<span style="color: var(--accent);">11</span>
+        <div class="brand-hero-wrap">
+          <div class="brand-hero-logo-box" id="welcome-brand-logo">
+            <!-- Inserido dinamicamente via ClubManager.renderCamisa11Logo -->
+          </div>
+          <h1 class="brand-title-main">
+            CAMISA<span>11</span>
           </h1>
-          <p style="font-size: 1.15rem; color: var(--text-secondary); margin-top: 6px; margin-bottom: 30px;">
+          <p class="brand-slogan">
             "Seu clube. Sua história."
           </p>
 
-          <div style="display: flex; flex-direction: column; gap: 14px; max-width: 340px; margin: 0 auto;">
+          <!-- CARD DE CARREIRA ATIVA (SE HOUVER SAVE) -->
+          <div id="welcome-active-career-card" class="resume-career-card" style="display: none;" onclick="App.onCareerReady()">
+            <div class="resume-career-info">
+              <div id="welcome-active-badge"></div>
+              <div class="resume-career-text">
+                <h4 id="welcome-active-club-name">CAMISA11 FC</h4>
+                <p id="welcome-active-meta">Temporada 2026 · Rodada 1 · 72 OVR</p>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-sm">▶️ JOGAR</button>
+          </div>
+
+          <!-- BOTÕES PRINCIPAIS E OPÇÕES -->
+          <div style="display: flex; flex-direction: column; gap: 12px; max-width: 340px; margin: 0 auto;">
             <button class="btn btn-primary btn-lg" onclick="App.showOnboardStep('choose')">
               ⚽ ESCOLHER UM CLUBE
             </button>
@@ -485,69 +506,307 @@
               🛠️ CRIAR MEU CLUBE
             </button>
             <button class="btn btn-secondary btn-md" id="onboard-btn-continue" style="display: none;" onclick="App.onCareerReady()">
-              ▶️ CONTINUAR CARREIRA
+              ▶️ Continuar Carreira
+            </button>
+            <button class="btn btn-secondary btn-md" id="onboard-btn-new-game" onclick="App.promptNewCareer()">
+              🆕 Nova Carreira
+            </button>
+            <button class="btn btn-secondary btn-md" onclick="App.openSettings()">
+              ⚙️ Configurações
             </button>
           </div>
         </div>
       </div>
 
-      <!-- PASSO 2A: ESCOLHER UM CLUBE -->
+      <!-- PASSO CONFIGURAÇÕES (REGRA 3 E 92) -->
+      <div id="onboard-step-settings" class="onboard-step" style="display: none;">
+        <div style="margin-bottom: 18px; text-align: center;">
+          <h2 style="font-size: 1.4rem; font-weight: 900;">CONFIGURAÇÕES</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Ajustes de áudio, simulação e gerenciamento de save</p>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">🔊 Efeitos Sonoros</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Áudio de Estádio</div>
+              <div class="settings-desc">Apito do juiz, chutes e comemoração de gol</div>
+            </div>
+            <button class="settings-toggle-btn active" id="settings-audio-toggle" onclick="App.toggleSoundSettings()">LIGADO</button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Volume Geral</div>
+              <div class="settings-desc" id="settings-volume-label">70%</div>
+            </div>
+            <input type="range" min="0" max="100" value="70" class="settings-slider" id="settings-volume-slider" oninput="App.onVolumeChange(this.value)">
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">⚡ Velocidade da Simulação</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Ritmo das Partidas</div>
+              <div class="settings-desc">Velocidade da simulação acelerada</div>
+            </div>
+            <select id="settings-sim-speed" style="padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); border-radius: var(--radius-sm); font-size: 0.85rem;" onchange="App.onSimSpeedChange(this.value)">
+              <option value="1">Normal (1x)</option>
+              <option value="2" selected>Rápido (2x)</option>
+              <option value="4">Instantâneo (Ultra)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">💾 Gerenciamento do Save</div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Status do Save</div>
+              <div class="settings-desc" id="settings-save-status">Verificando...</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="btn btn-secondary btn-sm btn-block" onclick="App.exportSaveFile()">📤 Exportar Save</button>
+            <button class="btn btn-secondary btn-sm btn-block" onclick="App.promptImportSave()">📥 Importar Save</button>
+          </div>
+          <button class="btn btn-danger-subtle btn-sm btn-block" style="margin-top: 8px;" onclick="App.deleteSaveData()">🗑️ Apagar Carreira Salva</button>
+        </div>
+
+        <div style="margin-top: 18px; text-align: center;">
+          <button class="btn btn-primary btn-block" onclick="App.closeSettings()">Concluir</button>
+        </div>
+      </div>
+
+      <!-- PASSO 2A: ESCOLHER UM CLUBE (REGRA 4) -->
       <div id="onboard-step-choose" class="onboard-step" style="display: none;">
         <div style="margin-bottom: 14px;">
           <h2 style="font-size: 1.4rem; font-weight: 900;">ESCOLHA SEU CLUBE</h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary);">Filtre por divisão ou pesquise seu time de coração</p>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Filtre por divisão, estado ou busque seu time do coração</p>
         </div>
 
-        <!-- FILTROS E PESQUISA -->
+        <!-- FILTROS E PESQUISA (REGRA 4) -->
         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
-          <input type="text" id="choose-club-search" placeholder="🔍 Pesquisar clube, cidade ou estado..." style="width: 100%; padding: 9px 14px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-size: 0.88rem;" oninput="App.onClubSearchInput(this.value)">
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="choose-club-search" placeholder="🔍 Pesquisar clube, cidade ou estado..." style="flex: 1; padding: 9px 14px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-size: 0.88rem;" oninput="App.onClubSearchInput(this.value)">
+            <select id="choose-club-state" style="padding: 9px 12px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-size: 0.82rem; font-weight: 700; cursor: pointer;" onchange="App.onClubStateFilter(this.value)">
+              <option value="ALL">Todos Estados</option>
+              <option value="SP">São Paulo (SP)</option>
+              <option value="RJ">Rio de Janeiro (RJ)</option>
+              <option value="MG">Minas Gerais (MG)</option>
+              <option value="RS">Rio Grande do Sul (RS)</option>
+              <option value="PR">Paraná (PR)</option>
+              <option value="SC">Santa Catarina (SC)</option>
+              <option value="BA">Bahia (BA)</option>
+              <option value="PE">Pernambuco (PE)</option>
+              <option value="CE">Ceará (CE)</option>
+              <option value="GO">Goiás (GO)</option>
+              <option value="MT">Mato Grosso (MT)</option>
+            </select>
+          </div>
+
           <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;" id="choose-division-pills">
             <button class="btn btn-secondary btn-xs active" data-div="ALL" onclick="App.filterChooseClubs('ALL')">TODOS</button>
             <button class="btn btn-secondary btn-xs" data-div="brasileirao_serie_a" onclick="App.filterChooseClubs('brasileirao_serie_a')">SÉRIE A</button>
             <button class="btn btn-secondary btn-xs" data-div="brasileirao_serie_b" onclick="App.filterChooseClubs('brasileirao_serie_b')">SÉRIE B</button>
             <button class="btn btn-secondary btn-xs" data-div="brasileirao_serie_c" onclick="App.filterChooseClubs('brasileirao_serie_c')">SÉRIE C</button>
             <button class="btn btn-secondary btn-xs" data-div="brasileirao_serie_d" onclick="App.filterChooseClubs('brasileirao_serie_d')">SÉRIE D</button>
+            <button class="btn btn-secondary btn-xs" data-div="ESTADUAIS" onclick="App.filterChooseClubs('ESTADUAIS')">ESTADUAIS</button>
           </div>
         </div>
 
         <div class="choose-clubs-grid" id="choose-clubs-grid" style="max-height: 380px; overflow-y: auto;">
-          <!-- Inserido dinamicamente -->
+          <!-- Inserido dinamicamente via App.renderChooseClubsList() -->
         </div>
         <div style="margin-top: 18px; text-align: center;">
           <button class="btn btn-secondary btn-sm" onclick="App.showOnboardStep('welcome')">Voltar</button>
         </div>
       </div>
 
-      <!-- PASSO 2B: CRIAR MEU CLUBE -->
+      <!-- PASSO 2B: CRIAR MEU CLUBE (REGRA 5) -->
       <div id="onboard-step-create" class="onboard-step" style="display: none;">
-        <div style="margin-bottom: 16px;">
-          <h2 style="font-size: 1.4rem; font-weight: 900;">CRIE SEU CLUBE</h2>
-          <p style="font-size: 0.85rem; color: var(--text-secondary);">Defina identidade, cores e símbolo do seu time</p>
+        <div style="margin-bottom: 14px; text-align: center;">
+          <h2 style="font-size: 1.4rem; font-weight: 900;">OFICINA DO CLUBE</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">Fundação, identidade visual e comissão técnica do seu novo time</p>
         </div>
 
-        <div style="display: flex; justify-content: center; margin-bottom: 16px;" id="create-badge-preview"></div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div>
-            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Nome do Clube</label>
-            <input type="text" id="create-club-name" value="CAMISA11 FC" style="width: 100%; padding: 10px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-main);" oninput="App.updateCreateClubPreview()">
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Sigla</label>
-              <input type="text" id="create-club-short" value="C11" maxlength="4" style="width: 100%; padding: 10px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-main);" oninput="App.updateCreateClubPreview()">
-            </div>
-            <div>
-              <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Cidade</label>
-              <input type="text" id="create-club-city" value="São Paulo" style="width: 100%; padding: 10px; background: var(--bg-card-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-main);" oninput="App.updateCreateClubPreview()">
+        <!-- HERO DE PRÉ-VISUALIZAÇÃO INTERATIVA DO ESCUDO E CLUBE -->
+        <div class="create-badge-hero">
+          <div class="create-badge-preview-icon" id="create-badge-preview"></div>
+          <div class="create-badge-hero-info">
+            <h3 id="create-preview-name">CAMISA11 FC</h3>
+            <p id="create-preview-meta">São Paulo - SP · Brasil</p>
+            <div class="create-badge-tags">
+              <span class="badge-tag" id="create-preview-div">Série D</span>
+              <span class="badge-tag gold" id="create-preview-ovr">⭐ 64 OVR</span>
+              <span class="badge-tag" id="create-preview-budget">💰 R$ 2.500.000</span>
+              <span class="badge-tag" id="create-preview-stadium">🏟️ Arena Camisa11</span>
             </div>
           </div>
+        </div>
 
-          <div style="display: flex; gap: 10px; margin-top: 14px;">
-            <button class="btn btn-secondary btn-block" onclick="App.showOnboardStep('welcome')">Voltar</button>
-            <button class="btn btn-primary btn-block" onclick="App.submitCreatedClub()">AVANÇAR</button>
+        <!-- 1. DADOS DE IDENTIDADE -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">📝 1. Identidade e Localização</div>
+          <div style="margin-bottom: 10px;">
+            <label class="workshop-label">Nome Completo do Clube</label>
+            <input type="text" id="create-club-name" value="Camisa11 Futebol Clube" class="workshop-input" placeholder="Ex: Grêmio Esportivo Brasil" oninput="App.updateCreateClubPreview()">
           </div>
+
+          <div class="workshop-grid-2" style="margin-bottom: 10px;">
+            <div>
+              <label class="workshop-label">Nome Curto</label>
+              <input type="text" id="create-club-shortname" value="Camisa11" maxlength="15" class="workshop-input" placeholder="Ex: Camisa11" oninput="App.updateCreateClubPreview()">
+            </div>
+            <div>
+              <label class="workshop-label">Sigla (3 a 4 letras)</label>
+              <input type="text" id="create-club-sigla" value="C11" maxlength="4" class="workshop-input" style="text-transform: uppercase;" placeholder="Ex: C11" oninput="App.updateCreateClubPreview()">
+            </div>
+          </div>
+
+          <div class="workshop-grid-3">
+            <div>
+              <label class="workshop-label">Cidade</label>
+              <input type="text" id="create-club-city" value="São Paulo" class="workshop-input" placeholder="Cidade" oninput="App.updateCreateClubPreview()">
+            </div>
+            <div>
+              <label class="workshop-label">Estado</label>
+              <select id="create-club-state" class="workshop-input" onchange="App.updateCreateClubPreview()">
+                <option value="SP" selected>SP - São Paulo</option>
+                <option value="RJ">RJ - Rio de Janeiro</option>
+                <option value="MG">MG - Minas Gerais</option>
+                <option value="RS">RS - Rio Grande do Sul</option>
+                <option value="PR">PR - Paraná</option>
+                <option value="SC">SC - Santa Catarina</option>
+                <option value="BA">BA - Bahia</option>
+                <option value="PE">PE - Pernambuco</option>
+                <option value="CE">CE - Ceará</option>
+                <option value="GO">GO - Goiás</option>
+                <option value="MT">MT - Mato Grosso</option>
+                <option value="PA">PA - Pará</option>
+                <option value="AM">AM - Amazonas</option>
+              </select>
+            </div>
+            <div>
+              <label class="workshop-label">País</label>
+              <input type="text" id="create-club-country" value="Brasil" readonly class="workshop-input" style="opacity: 0.8; cursor: default;">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CORES OFICIAIS (PRIMÁRIA, SECUNDÁRIA, TERCIÁRIA) -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">🎨 2. Cores Oficiais</div>
+          <div class="workshop-grid-3">
+            <!-- Cor Primária -->
+            <div>
+              <label class="workshop-label">Cor Primária</label>
+              <div class="color-picker-flex">
+                <input type="color" id="create-color-primary" value="#0f172a" class="color-picker-native" onchange="App.setCreateColor('primary', this.value)">
+                <div class="swatch-group">
+                  <span class="swatch-btn" style="background:#0f172a;" onclick="App.setCreateColor('primary', '#0f172a')" title="Preto Noturno"></span>
+                  <span class="swatch-btn" style="background:#ffffff;" onclick="App.setCreateColor('primary', '#ffffff')" title="Branco"></span>
+                  <span class="swatch-btn" style="background:#1e3a8a;" onclick="App.setCreateColor('primary', '#1e3a8a')" title="Azul Real"></span>
+                  <span class="swatch-btn" style="background:#7f1d1d;" onclick="App.setCreateColor('primary', '#7f1d1d')" title="Rubro"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cor Secundária -->
+            <div>
+              <label class="workshop-label">Cor Secundária</label>
+              <div class="color-picker-flex">
+                <input type="color" id="create-color-secondary" value="#10b981" class="color-picker-native" onchange="App.setCreateColor('secondary', this.value)">
+                <div class="swatch-group">
+                  <span class="swatch-btn" style="background:#10b981;" onclick="App.setCreateColor('secondary', '#10b981')" title="Verde Esmeralda"></span>
+                  <span class="swatch-btn" style="background:#f59e0b;" onclick="App.setCreateColor('secondary', '#f59e0b')" title="Dourado"></span>
+                  <span class="swatch-btn" style="background:#ef4444;" onclick="App.setCreateColor('secondary', '#ef4444')" title="Vermelho"></span>
+                  <span class="swatch-btn" style="background:#3b82f6;" onclick="App.setCreateColor('secondary', '#3b82f6')" title="Azul Celeste"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cor Terciária -->
+            <div>
+              <label class="workshop-label">Cor Terciária</label>
+              <div class="color-picker-flex">
+                <input type="color" id="create-color-tertiary" value="#f8fafc" class="color-picker-native" onchange="App.setCreateColor('tertiary', this.value)">
+                <div class="swatch-group">
+                  <span class="swatch-btn" style="background:#f8fafc;" onclick="App.setCreateColor('tertiary', '#f8fafc')" title="Branco Gelo"></span>
+                  <span class="swatch-btn" style="background:#f59e0b;" onclick="App.setCreateColor('tertiary', '#f59e0b')" title="Ouro Metálico"></span>
+                  <span class="swatch-btn" style="background:#0f172a;" onclick="App.setCreateColor('tertiary', '#0f172a')" title="Preto"></span>
+                  <span class="swatch-btn" style="background:#94a3b8;" onclick="App.setCreateColor('tertiary', '#94a3b8')" title="Prata"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. MODELO DO ESCUDO -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">🛡️ 3. Modelo do Escudo</div>
+          <div class="badge-options-grid" id="create-shapes-grid">
+            <!-- Gerado dinamicamente via App.renderShapeOptions() -->
+          </div>
+        </div>
+
+        <!-- 4. SÍMBOLO ABSTRATO -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">⚡ 4. Símbolo Abstrato</div>
+          <div class="badge-options-grid" id="create-symbols-grid">
+            <!-- Gerado dinamicamente via App.renderSymbolOptions() -->
+          </div>
+        </div>
+
+        <!-- 5. PADRÃO GEOMÉTRICO (PATTERN) -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">📐 5. Padrão Geométrico</div>
+          <div class="badge-options-grid" id="create-patterns-grid">
+            <!-- Gerado dinamicamente via App.renderPatternOptions() -->
+          </div>
+        </div>
+
+        <!-- 6. ONDE COMEÇAR (DIVISÃO INICIAL) -->
+        <div class="workshop-section">
+          <div class="workshop-section-title">🏆 6. Onde Começar (Divisão Inicial)</div>
+          <div class="starting-div-grid" id="create-divisions-grid">
+            <div class="starting-div-card active" data-div="brasileirao_serie_d" onclick="App.setCreateDivision('brasileirao_serie_d')">
+              <h5>Série D</h5>
+              <div class="div-budget-tag">R$ 2.500.000</div>
+              <div class="div-ovr-tag">⭐ 64 OVR · Raiz</div>
+            </div>
+            <div class="starting-div-card" data-div="brasileirao_serie_c" onclick="App.setCreateDivision('brasileirao_serie_c')">
+              <h5>Série C</h5>
+              <div class="div-budget-tag">R$ 4.000.000</div>
+              <div class="div-ovr-tag">⭐ 68 OVR · Regional</div>
+            </div>
+            <div class="starting-div-card" data-div="brasileirao_serie_b" onclick="App.setCreateDivision('brasileirao_serie_b')">
+              <h5>Série B</h5>
+              <div class="div-budget-tag">R$ 6.500.000</div>
+              <div class="div-ovr-tag">⭐ 72 OVR · Nacional</div>
+            </div>
+            <div class="starting-div-card" data-div="brasileirao_serie_a" onclick="App.setCreateDivision('brasileirao_serie_a')">
+              <h5>Série A</h5>
+              <div class="div-budget-tag">R$ 12.000.000</div>
+              <div class="div-ovr-tag">⭐ 76 OVR · Elite</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. ESTRUTURA GERADA AUTOMATICAMENTE -->
+        <div class="auto-gen-panel">
+          <div class="auto-gen-panel-title">⚙️ Estrutura Gerada Automaticamente</div>
+          <div class="auto-gen-list">
+            <div class="auto-gen-item">👥 <strong>Elenco:</strong> 22 atletas profissionais (titulares e reservas)</div>
+            <div class="auto-gen-item">🏟️ <strong>Estádio:</strong> <span id="auto-gen-stadium">Arena Camisa11 (10.000 lug.)</span></div>
+            <div class="auto-gen-item">👔 <strong>Comissão:</strong> Adjunto, Médico e Chefe de Olheiros</div>
+            <div class="auto-gen-item">📅 <strong>Calendário:</strong> <span id="auto-gen-calendar">38 rodadas na Série D + Estadual SP</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button class="btn btn-secondary btn-block" onclick="App.showOnboardStep('welcome')">Voltar</button>
+          <button class="btn btn-primary btn-block btn-lg" onclick="App.submitCreatedClub()">AVANÇAR PARA DESAFIO</button>
         </div>
       </div>
 
@@ -720,6 +979,7 @@
   <!-- SCRIPTS MODULARES CAMISA11 -->
   <script src="js/database.js"></script>
   <script src="js/save.js"></script>
+  <script src="js/data.js"></script>
   <script src="js/club.js"></script>
   <script src="js/tactics.js"></script>
   <script src="js/audio.js"></script>

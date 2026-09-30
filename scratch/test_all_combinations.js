@@ -1,10 +1,4 @@
-/**
- * CAMISA11 — Football Career & Manager
- * js/club.js — Gerador de Emblemas Geométricos Originais, Criação de Clubes e Elenco
- * 
- * Sistema de identidade visual próprio: gera emblemas geométricos 100% originais
- * e não proprietários, sem cópia de escudos, logos ou marcas reais.
- */
+const assert = require('assert');
 
 const ClubManager = {
   // Renderiza a marca oficial CAMISA11 (Camisa vetorial minimalista com o número 11)
@@ -27,7 +21,6 @@ const ClubManager = {
     `;
   },
 
-  // Retorna os modelos geométricos de escudo/emblema disponíveis
   getShapeOptions() {
     return [
       { id: 'shield', name: 'Escudo' },
@@ -40,7 +33,6 @@ const ClubManager = {
     ];
   },
 
-  // Retorna os padrões visuais internos do emblema (Patterns)
   getPatternOptions() {
     return [
       { id: 'solid', name: 'Liso' },
@@ -53,10 +45,9 @@ const ClubManager = {
     ];
   },
 
-  // Retorna os símbolos abstratos e monograma do emblema
   getSymbolOptions() {
     return [
-      { id: 'monogram', name: 'Sigla' },
+      { id: 'monogram', name: 'Monograma' },
       { id: 'ball', name: 'Bola' },
       { id: 'star', name: 'Estrela' },
       { id: 'crown', name: 'Coroa' },
@@ -69,7 +60,7 @@ const ClubManager = {
     ];
   },
 
-  // Renderiza um emblema vetorial SVG geométrico original, combinando Forma + Cores + Padrão + Símbolo
+  // Renderiza um emblema vetorial geométrico 100% original e não proprietário
   renderBadge(club, size = 48) {
     if (!club) return '';
     const primary = club.primaryColor || '#0f172a';
@@ -83,7 +74,7 @@ const ClubManager = {
     const strokeWidth = Math.max(2, Math.round(size / 24));
     const clipId = 'emb_' + Math.random().toString(36).substr(2, 7);
 
-    // 1. Geometria Base e Borda Interna (Inner Rim)
+    // 1. Geometria da Forma e Caminho do Clip
     let shapeGeometry = '';
     let innerRim = '';
 
@@ -119,7 +110,7 @@ const ClubManager = {
         break;
     }
 
-    // 2. Padrões Geométricos Internos (Recortados dentro da forma do clube)
+    // 2. Padrões Geométricos Internos (Patterns)
     let patternSvg = '';
     switch (pattern) {
       case 'stripes':
@@ -248,7 +239,7 @@ const ClubManager = {
     const baseElement = shapeGeometry.replace('/>', ` fill="${primary}" stroke="${secondary}" stroke-width="${strokeWidth * 2}" stroke-linejoin="round"/>`);
 
     return `
-      <svg width="${size}" height="${size}" viewBox="0 0 100 100" class="club-badge-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.35));">
+      <svg width="${size}" height="${size}" viewBox="0 0 100 100" class="club-badge-svg" style="display:inline-block; vertical-align:middle; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));">
         <defs>
           <clipPath id="${clipId}">
             ${shapeGeometry}
@@ -260,200 +251,30 @@ const ClubManager = {
         ${symbolSvg}
       </svg>
     `;
-  },
-
-  // Gera um nome brasileiro realista
-  generatePlayerName() {
-    const defaultFirst = ['Lucas', 'Gabriel', 'Matheus', 'Felipe', 'Bruno', 'Rodrigo', 'Thiago', 'Danilo', 'Kauan', 'Vinicius', 'Henrique', 'Diego', 'Rafael', 'Arthur', 'Gustavo', 'Pedro'];
-    const defaultLast = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Rodrigues', 'Ferreira', 'Alves', 'Pereira', 'Lima', 'Gomes', 'Costa', 'Ribeiro'];
-    const firstList = (typeof Camisa11Data !== 'undefined' && Camisa11Data.NAMES) ? Camisa11Data.NAMES.first : defaultFirst;
-    const lastList = (typeof Camisa11Data !== 'undefined' && Camisa11Data.NAMES) ? Camisa11Data.NAMES.last : defaultLast;
-    const first = firstList[Math.floor(Math.random() * firstList.length)];
-    const last = lastList[Math.floor(Math.random() * lastList.length)];
-    return `${first} ${last}`;
-  },
-
-  // Calcula valor de mercado de um jogador calibrado aos exemplos do jogo
-  calculatePlayerValue(ovr, age, potential) {
-    // Calibração: OVR 65 ~R$ 1.5M | OVR 72 (19 anos) ~R$ 3.2M | OVR 84 ~R$ 8.5M
-    const base = Math.pow(ovr / 22, 3.85) * 26000;
-    const ageMultiplier = age <= 20 ? 1.35 : age <= 24 ? 1.2 : age <= 28 ? 1.0 : age <= 32 ? 0.75 : 0.5;
-    const potentialBonus = Math.max(1, (potential - ovr) * 0.05 + 1);
-    const rawVal = Math.round(base * ageMultiplier * potentialBonus);
-    return Math.max(250000, Math.round(rawVal / 50000) * 50000);
-  },
-
-  // Gera um único jogador com atributos calculados pelo OVR e Posição
-  createPlayer(pos, targetOvr = 67, targetAge = null) {
-    const age = targetAge || Math.floor(Math.random() * 15) + 18; // 18 a 32 anos
-    const variance = Math.floor(Math.random() * 5) - 2; // -2 a +2
-    const ovr = Math.max(55, Math.min(92, targetOvr + variance));
-    const potential = Math.min(94, ovr + (age <= 21 ? Math.floor(Math.random() * 10) + 4 : Math.floor(Math.random() * 4)));
-
-    // Distribuição de atributos detalhados de acordo com a posição
-    let pace = ovr, shoot = ovr, pass = ovr, dribble = ovr, defend = ovr, physical = ovr;
-
-    if (pos === 'GK') {
-      defend = ovr + 4;
-      physical = ovr + 2;
-      pace = Math.max(45, ovr - 15);
-      shoot = Math.max(30, ovr - 35);
-      pass = Math.max(50, ovr - 10);
-      dribble = Math.max(40, ovr - 20);
-    } else if (['ZAG', 'LE', 'LD'].includes(pos)) {
-      defend = ovr + 5;
-      physical = ovr + 4;
-      pace = pos === 'ZAG' ? Math.max(50, ovr - 8) : ovr + 4;
-      pass = ovr - 2;
-      dribble = ovr - 5;
-      shoot = Math.max(40, ovr - 20);
-    } else if (['VOL', 'MC', 'MEI', 'ME', 'MD'].includes(pos)) {
-      pass = ovr + 4;
-      dribble = ovr + 3;
-      shoot = pos === 'MEI' ? ovr + 3 : ovr - 2;
-      defend = pos === 'VOL' ? ovr + 4 : ovr - 3;
-      pace = ovr;
-      physical = ovr;
-    } else {
-      // ATA, PE, PD
-      shoot = ovr + 5;
-      pace = ovr + 4;
-      dribble = ovr + 3;
-      pass = ovr - 2;
-      defend = Math.max(35, ovr - 22);
-      physical = ovr + 1;
-    }
-
-    const value = this.calculatePlayerValue(ovr, age, potential);
-    const wage = Math.round(value * 0.008);
-
-    return {
-      id: 'p_' + Math.random().toString(36).substr(2, 9),
-      name: this.generatePlayerName(),
-      age,
-      pos,
-      ovr,
-      potential,
-      energy: 100,
-      stats: {
-        pace: Math.min(99, Math.max(40, pace)),
-        shooting: Math.min(99, Math.max(40, shoot)),
-        passing: Math.min(99, Math.max(40, pass)),
-        dribbling: Math.min(99, Math.max(40, dribble)),
-        defending: Math.min(99, Math.max(40, defend)),
-        physical: Math.min(99, Math.max(40, physical))
-      },
-      value,
-      wage,
-      goals: 0,
-      assists: 0,
-      matches: 0,
-      yellowCards: 0,
-      redCards: 0,
-      isStarter: false,
-      slotIndex: null
-    };
-  },
-
-  // Gera um elenco inicial equilibrado (~21 atletas)
-  generateInitialSquad(baseOvr = 67) {
-    const squad = [];
-
-    // 2 Goleiros
-    squad.push(this.createPlayer('GK', baseOvr - 1, 26));
-    squad.push(this.createPlayer('GK', baseOvr - 5, 21));
-
-    // 7 Defensores
-    squad.push(this.createPlayer('LE', baseOvr, 24));
-    squad.push(this.createPlayer('LE', baseOvr - 4, 19));
-    squad.push(this.createPlayer('ZAG', baseOvr + 1, 27));
-    squad.push(this.createPlayer('ZAG', baseOvr, 25));
-    squad.push(this.createPlayer('ZAG', baseOvr - 3, 20));
-    squad.push(this.createPlayer('LD', baseOvr, 24));
-    squad.push(this.createPlayer('LD', baseOvr - 3, 22));
-
-    // 7 Meio-Campistas
-    squad.push(this.createPlayer('VOL', baseOvr + 1, 26));
-    squad.push(this.createPlayer('VOL', baseOvr - 2, 21));
-    squad.push(this.createPlayer('MC', baseOvr, 25));
-    squad.push(this.createPlayer('MC', baseOvr - 1, 23));
-    squad.push(this.createPlayer('MC', baseOvr - 4, 19));
-    squad.push(this.createPlayer('MEI', baseOvr + 2, 24));
-    squad.push(this.createPlayer('MEI', baseOvr - 3, 20));
-
-    // 5 Atacantes
-    squad.push(this.createPlayer('PE', baseOvr + 1, 23));
-    squad.push(this.createPlayer('PD', baseOvr + 1, 22));
-    squad.push(this.createPlayer('ATA', baseOvr + 2, 26));
-    squad.push(this.createPlayer('ATA', baseOvr - 1, 21));
-    squad.push(this.createPlayer('ATA', baseOvr - 4, 18));
-
-    // Escala os 11 titulares automaticamente no 4-3-3
-    this.assignDefaultStarters(squad, '4-3-3');
-
-    return squad;
-  },
-
-  // Seleciona os 11 melhores para a formação padrão
-  assignDefaultStarters(squad, formationName = '4-3-3') {
-    const defaultFormation = {
-      slots: [
-        { role: 'GK' },
-        { role: 'LD' },
-        { role: 'ZAG' },
-        { role: 'ZAG' },
-        { role: 'LE' },
-        { role: 'VOL' },
-        { role: 'MC' },
-        { role: 'MEI' },
-        { role: 'PD' },
-        { role: 'ATA' },
-        { role: 'PE' }
-      ]
-    };
-    const formation = (typeof Camisa11Data !== 'undefined' && Camisa11Data.FORMATIONS && Camisa11Data.FORMATIONS[formationName]) 
-      ? Camisa11Data.FORMATIONS[formationName] 
-      : defaultFormation;
-    
-    // Reseta titulares
-    squad.forEach(p => {
-      p.isStarter = false;
-      p.slotIndex = null;
-    });
-
-    const usedIds = new Set();
-
-    formation.slots.forEach((slot, index) => {
-      // Procura primeiro atleta da mesma posição disponível
-      let candidate = squad
-        .filter(p => !usedIds.has(p.id))
-        .filter(p => p.pos === slot.role || (slot.role === 'ZAG' && ['ZAG', 'LE', 'LD'].includes(p.pos)) || (slot.role === 'MEI' && ['MEI', 'MC', 'VOL'].includes(p.pos)) || (slot.role === 'ATA' && ['ATA', 'PE', 'PD'].includes(p.pos)))
-        .sort((a, b) => b.ovr - a.ovr)[0];
-
-      if (!candidate) {
-        candidate = squad
-          .filter(p => !usedIds.has(p.id) && (slot.role === 'GK' ? p.pos === 'GK' : p.pos !== 'GK'))
-          .sort((a, b) => b.ovr - a.ovr)[0];
-      }
-
-      if (candidate) {
-        candidate.isStarter = true;
-        candidate.slotIndex = index;
-        usedIds.add(candidate.id);
-      }
-    });
-  },
-
-  // Calcula o OVR médio dos 11 titulares
-  calculateTeamOvr(squad) {
-    const starters = squad.filter(p => p.isStarter);
-    if (starters.length === 0) return 60;
-    const sum = starters.reduce((acc, p) => acc + p.ovr, 0);
-    return Math.round(sum / starters.length);
   }
 };
 
-// Exporta para Node.js (testes) ou Window (Navegador)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = ClubManager;
-}
+const shapes = ClubManager.getShapeOptions();
+const patterns = ClubManager.getPatternOptions();
+const symbols = ClubManager.getSymbolOptions();
+
+let testCount = 0;
+shapes.forEach(sh => {
+  patterns.forEach(pt => {
+    symbols.forEach(sy => {
+      const svg = ClubManager.renderBadge({
+        primaryColor: '#000000',
+        secondaryColor: '#ffffff',
+        tertiaryColor: '#f59e0b',
+        badgeShape: sh.id,
+        badgePattern: pt.id,
+        badgeSymbol: sy.id,
+        sigla: 'TEST'
+      }, 48);
+      assert(svg.includes('<svg') && svg.includes('clipPath') && svg.includes('emb_'));
+      testCount++;
+    });
+  });
+});
+
+console.log(`✅ Tested ${testCount} unique SVG emblem variations! All valid.`);

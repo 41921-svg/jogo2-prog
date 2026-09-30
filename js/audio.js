@@ -6,11 +6,20 @@
 const SoundEngine = {
   ctx: null,
   enabled: true,
+  volume: 0.7,
 
   init() {
     if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       this.ctx = new AudioCtx();
+    }
+    // Carrega configurações persistidas se existirem
+    if (typeof SaveSystem !== 'undefined' && SaveSystem.loadSettings) {
+      const s = SaveSystem.loadSettings();
+      if (s) {
+        if (s.soundEnabled !== undefined) this.enabled = Boolean(s.soundEnabled);
+        if (s.soundVolume !== undefined) this.volume = Number(s.soundVolume);
+      }
     }
   },
 
@@ -20,9 +29,33 @@ const SoundEngine = {
     }
   },
 
-  toggleSound() {
+  toggle() {
     this.enabled = !this.enabled;
+    this.save();
     return this.enabled;
+  },
+
+  toggleSound() {
+    return this.toggle();
+  },
+
+  setEnabled(val) {
+    this.enabled = Boolean(val);
+    this.save();
+  },
+
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, Number(vol)));
+    this.save();
+  },
+
+  save() {
+    if (typeof SaveSystem !== 'undefined' && SaveSystem.saveSettings) {
+      const s = SaveSystem.loadSettings() || {};
+      s.soundEnabled = this.enabled;
+      s.soundVolume = this.volume;
+      SaveSystem.saveSettings(s);
+    }
   },
 
   // Efeito de apito do árbitro (agudo com oscilação)

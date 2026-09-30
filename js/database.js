@@ -213,7 +213,7 @@ const DataProvider = {
   // CONSULTAS AVANÇADAS E FILTROS (Regras 4 e 17)
   // --------------------------------------------------------------------------
 
-  // Busca clubes com múltiplos critérios (nome, cidade, estado, divisão)
+  // Busca clubes com múltiplos critérios (nome, cidade, estado, divisão) - Regra 4
   searchClubs(filters = {}) {
     let results = this.getAllClubs();
 
@@ -222,12 +222,18 @@ const DataProvider = {
       results = results.filter(c =>
         c.name.toLowerCase().includes(q) ||
         (c.shortName && c.shortName.toLowerCase().includes(q)) ||
-        (c.city && c.city.toLowerCase().includes(q))
+        (c.sigla && c.sigla.toLowerCase().includes(q)) ||
+        (c.city && c.city.toLowerCase().includes(q)) ||
+        (c.state && c.state.toLowerCase().includes(q))
       );
     }
 
     if (filters.division && filters.division !== 'ALL') {
-      results = results.filter(c => c.division === filters.division);
+      if (filters.division === 'ESTADUAIS') {
+        results = results.filter(c => Boolean(c.stateLeagueId));
+      } else {
+        results = results.filter(c => c.division === filters.division);
+      }
     }
 
     if (filters.tier) {
@@ -298,33 +304,90 @@ const DataProvider = {
   // CRIAÇÃO E GERAÇÃO PROCEDURAL REALISTA
   // --------------------------------------------------------------------------
 
-  // Registra um clube personalizado
+  // Registra um clube personalizado (Regra 5)
   createClub(customData) {
     const id = customData.id || `custom_${Date.now()}`;
+    const division = customData.division || 'brasileirao_serie_d';
+
+    // Calibração procedural conforme a divisão inicial escolhida (Regra 5)
+    let defOvr = 64;
+    let defRep = 45;
+    let defBudget = 2500000;
+    let defWage = 500000;
+    let defTier = 4;
+    let defCapacity = 10000;
+
+    if (division === 'brasileirao_serie_a') {
+      defOvr = 76;
+      defRep = 75;
+      defBudget = 12000000;
+      defWage = 2500000;
+      defTier = 1;
+      defCapacity = 32000;
+    } else if (division === 'brasileirao_serie_b') {
+      defOvr = 72;
+      defRep = 65;
+      defBudget = 6500000;
+      defWage = 1400000;
+      defTier = 2;
+      defCapacity = 20000;
+    } else if (division === 'brasileirao_serie_c') {
+      defOvr = 68;
+      defRep = 55;
+      defBudget = 4000000;
+      defWage = 900000;
+      defTier = 3;
+      defCapacity = 14000;
+    }
+
+    const stateUf = (customData.state || 'SP').toUpperCase();
+    const stateLeagueMap = {
+      'SP': 'estadual_sp',
+      'RJ': 'estadual_rj',
+      'MG': 'estadual_mg',
+      'RS': 'estadual_rs',
+      'PR': 'estadual_pr',
+      'BA': 'estadual_ba',
+      'CE': 'estadual_ce',
+      'PE': 'estadual_pe'
+    };
+
+    const sName = customData.shortName || customData.sigla || 'Clube';
+    const sigla = (customData.sigla || customData.shortName || 'CLB').toUpperCase().slice(0, 4);
+    const finalOvr = customData.ovr || defOvr;
+
     const club = {
       id: id,
       name: customData.name || 'Meu Clube FC',
-      shortName: customData.shortName || 'MCF',
+      shortName: sName,
+      sigla: sigla,
       city: customData.city || 'São Paulo',
-      state: customData.state || 'SP',
+      state: stateUf,
       country: customData.country || 'Brasil',
-      division: customData.division || 'brasileirao_serie_d',
-      tier: customData.tier || 4,
-      stateLeagueId: customData.stateLeagueId || 'estadual_sp',
-      reputation: customData.reputation || 60,
-      ovr: customData.ovr || 68,
-      attack: customData.attack || 69,
-      midfield: customData.midfield || 68,
-      defense: customData.defense || 67,
-      budget: customData.budget || 5000000,
-      wageBudget: customData.wageBudget || 1000000,
-      stadium: customData.stadium || 'Arena Municipal',
-      stadiumId: 'arena_municipal',
-      capacity: customData.capacity || 15000,
+      division: division,
+      tier: customData.tier || defTier,
+      stateLeagueId: customData.stateLeagueId || stateLeagueMap[stateUf] || 'estadual_sp',
+      reputation: customData.reputation || defRep,
+      ovr: finalOvr,
+      attack: customData.attack || (finalOvr + 1),
+      midfield: customData.midfield || finalOvr,
+      defense: customData.defense || (finalOvr - 1),
+      budget: customData.budget || defBudget,
+      wageBudget: customData.wageBudget || defWage,
+      stadium: customData.stadium || `Arena ${sName}`,
+      stadiumId: 'arena_custom',
+      capacity: customData.capacity || defCapacity,
       primaryColor: customData.primaryColor || '#0f172a',
       secondaryColor: customData.secondaryColor || '#10b981',
+      tertiaryColor: customData.tertiaryColor || '#f8fafc',
       badgeShape: customData.badgeShape || 'shield',
+      badgePattern: customData.badgePattern || 'solid',
       badgeSymbol: customData.badgeSymbol || 'ball',
+      staff: {
+        assistantCoach: 'Carlos Alberto (Adjunto)',
+        physio: 'Dr. Roberto Mendes (Médico)',
+        scout: 'Marcos Vinicius (Olheiro Chefe)'
+      },
       isCustom: true
     };
     this.clubs.set(id, club);

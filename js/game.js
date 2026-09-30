@@ -8,8 +8,18 @@
 
 const _getSaveSystem = () => {
   if (typeof SaveSystem !== 'undefined') return SaveSystem;
+  if (typeof globalThis !== 'undefined' && globalThis.SaveSystem) return globalThis.SaveSystem;
   if (typeof require !== 'undefined') {
     try { return require('./save.js'); } catch (e) { return null; }
+  }
+  return null;
+};
+
+const _getDataProvider = () => {
+  if (typeof DataProvider !== 'undefined') return DataProvider;
+  if (typeof globalThis !== 'undefined' && globalThis.DataProvider) return globalThis.DataProvider;
+  if (typeof require !== 'undefined') {
+    try { return require('./database.js'); } catch (e) { return null; }
   }
   return null;
 };
@@ -20,7 +30,8 @@ const GameEngine = {
 
   // Inicializa o motor do jogo
   async init() {
-    await DataProvider.init();
+    const dp = _getDataProvider();
+    if (dp && dp.init) await dp.init();
 
     // Tenta carregar carreira salva
     const saveSys = _getSaveSystem();
@@ -63,27 +74,28 @@ const GameEngine = {
 
   // Inicia uma nova carreira com clube escolhido ou criado
   startNewCareer(clubIdOrCustomData, options = {}) {
+    const dp = _getDataProvider();
     let club = null;
 
     if (typeof clubIdOrCustomData === 'string') {
       // Clube existente selecionado
-      club = DataProvider.getClub(clubIdOrCustomData);
+      club = dp.getClub(clubIdOrCustomData);
       if (!club) {
         throw new Error(`Clube não encontrado para o ID: ${clubIdOrCustomData}`);
       }
     } else if (typeof clubIdOrCustomData === 'object') {
       // Clube personalizado criado pelo usuário
-      club = DataProvider.createClub(clubIdOrCustomData);
+      club = dp.createClub(clubIdOrCustomData);
     } else {
       throw new Error('Parâmetro de clube inválido para iniciar carreira.');
     }
 
     // Carrega ou gera o elenco inicial
-    const squad = DataProvider.getTeamPlayers(club.id);
+    const squad = dp.getTeamPlayers(club.id);
 
     // Estrutura de dados da Carreira
     const competitionId = options.competitionId || club.division || 'brasileirao_serie_a';
-    const comp = DataProvider.getCompetition(competitionId);
+    const comp = dp.getCompetition(competitionId);
 
     // Ajusta o orçamento inicial de acordo com o desafio selecionado
     const difficultyMultiplier = options.difficulty === 'easy' ? 1.4 : options.difficulty === 'hard' ? 0.6 : 1.0;
@@ -146,19 +158,20 @@ const GameEngine = {
 
   // Configura a temporada e participantes da liga
   setupCompetitionSeason(competitionId) {
-    const comp = DataProvider.getCompetition(competitionId);
-    let leagueClubs = DataProvider.getLeagueTeams(competitionId);
+    const dp = _getDataProvider();
+    const comp = dp.getCompetition(competitionId);
+    let leagueClubs = dp.getLeagueTeams(competitionId);
 
-    // Garante que o clube do jogador esteja entre os participantes
-    if (!leagueClubs.find(c => c.id === this.state.club.id)) {
-      leagueClubs = [this.state.club, ...leagueClubs];
-    }
+    const targetCount = (comp ? comp.teamsCount : 20);
+
+    // Garante que o clube do jogador esteja entre os participantes e seja preservado
+    leagueClubs = [this.state.club, ...leagueClubs.filter(c => c.id !== this.state.club.id)];
 
     // Se faltarem clubes para atingir o número configurado na competição, completa dinamicamente
-    const needed = (comp ? comp.teamsCount : 20) - leagueClubs.length;
+    const needed = targetCount - leagueClubs.length;
     for (let i = 0; i < needed; i++) {
       const dummyId = `gen_club_${competitionId}_${i + 1}`;
-      const dummyClub = DataProvider.createClub({
+      const dummyClub = dp.createClub({
         id: dummyId,
         name: `Clube ${i + 1}`,
         shortName: `C${i + 1}`,
@@ -167,6 +180,10 @@ const GameEngine = {
         budget: 4000000
       });
       leagueClubs.push(dummyClub);
+    }
+
+    if (leagueClubs.length > targetCount) {
+      leagueClubs = leagueClubs.slice(0, targetCount);
     }
 
     // Inicializa a Tabela de Classificação
@@ -258,8 +275,9 @@ const GameEngine = {
 
     if (!userMatch) return null;
 
-    const homeClub = DataProvider.getClub(userMatch.homeId) || this.state.club;
-    const awayClub = DataProvider.getClub(userMatch.awayId) || this.state.club;
+    const dp = _getDataProvider();
+    const homeClub = (dp ? dp.getClub(userMatch.homeId) : null) || this.state.club;
+    const awayClub = (dp ? dp.getClub(userMatch.awayId) : null) || this.state.club;
 
     return {
       round: curRound,
